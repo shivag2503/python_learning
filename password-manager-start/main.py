@@ -2,14 +2,18 @@ from tkinter import *
 from tkinter import messagebox
 import random
 import pyperclip
+import json
+
 
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 
 
 def pass_generate():
     input_password.delete(0, END)
-    letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v',
-               'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R',
+    letters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u',
+               'v',
+               'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q',
+               'R',
                'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
     symbols = ['@', '#', '$', '%', '&', '*', '(', ')', '-', '_', '+', '=', '?']
     numbers = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
@@ -28,23 +32,56 @@ def pass_generate():
 
     pyperclip.copy(gen_pass)
 
+
 # ---------------------------- SAVE PASSWORD ------------------------------- #
 
 
 def save_password():
+    new_entry = {
+        input_website.get(): {
+            "email": input_email.get(),
+            "password": input_password.get(),
+        }
+    }
+
     if len(input_password.get()) == 0 or len(input_website.get()) == 0:
         messagebox.showerror(title="Fields are blank", message="You can't save blank website or password!!")
     else:
-        is_ok = messagebox.askokcancel(title=input_website.get(), message=f"These are the details entered: \n Email: "
-                                                                      f"{input_email.get()}\n Password: {input_password
-                                       .get()} \n Are you sure to save it?")
+        try:
+            with open("password_manager.json", mode="r") as file:
+                data = json.load(file)
+        except FileNotFoundError:
+            with open("password_manager.json", mode="w") as file:
+                json.dump(new_entry, file, indent=4)
+        else:
+            data.update(new_entry)
 
-        if is_ok:
-            with open("password_manager.txt", mode="a") as file:
-                text = f"{input_website.get()} | {input_email.get()} | {input_password.get()}\n"
-                file.write(text)
-                input_website.delete(0, END)
-                input_password.delete(0, END)
+            with open("password_manager.json", "w") as write_file:
+                json.dump(data, write_file, indent=4)
+        finally:
+            input_website.delete(0, END)
+            input_password.delete(0, END)
+
+
+# ---------------------------- Search Password ---------------------------------- #
+
+def search():
+    text = input_website.get()
+    if text == "":
+        messagebox.showerror("Error", "Please enter website for which credentials to be search for")
+    else:
+        try:
+            with open("password_manager.json", "r") as file:
+                data = json.load(file)
+        except FileNotFoundError:
+            messagebox.showerror("Error", "No Data File Found")
+        else:
+            if text in data:
+                email = data[text]["email"]
+                password = data[text]["password"]
+                messagebox.showinfo(f"Your {text} credentials", f"Email: {email} \nPassword: {password}")
+            else:
+                messagebox.showerror("Error", f"No credentials found for {text}")
 
 
 # ---------------------------- UI SETUP ------------------------------- #
@@ -63,7 +100,10 @@ website.grid(row=1, column=0)
 
 input_website = Entry(width=35)
 input_website.focus()
-input_website.grid(row=1, column=1, columnspan=2, sticky=E + W)
+input_website.grid(row=1, column=1, sticky=E + W)
+
+search_button = Button(text="Search", command=search)
+search_button.grid(row=1, column=2, sticky=E + W)
 
 email = Label(text="Email/Username:")
 email.grid(row=2, column=0)
