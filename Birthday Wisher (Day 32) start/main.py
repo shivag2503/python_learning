@@ -3,7 +3,7 @@ import random
 import smtplib
 
 my_email = "shivamagrawal1166171@gmail.com"
-password = "bbjfvnqejnbuxnxz"
+password = ""
 recipient_email = "shomuagrawal@gmail.com"
 
 today_date_time = dt.datetime.now()
